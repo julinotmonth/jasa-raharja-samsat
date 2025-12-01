@@ -31,7 +31,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             <Route element={<MainLayout />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/jasa-raharja-samsat" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
