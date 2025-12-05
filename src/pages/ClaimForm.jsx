@@ -6,11 +6,14 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Modal from '../components/common/Modal';
 import toast from 'react-hot-toast';
+import { saveClaim } from '../utils/claimStorage';
+import { fileToBase64 } from '../utils/fileHelper';
 
 const ClaimForm = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [claimNumber, setClaimNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Personal Data
@@ -82,11 +85,40 @@ const ClaimForm = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Convert files to base64
+      const ktpFileData = formData.ktpFile ? await fileToBase64(formData.ktpFile) : null;
+      const policeReportFileData = formData.policeReportFile ? await fileToBase64(formData.policeReportFile) : null;
+      const stnkFileData = formData.stnkFile ? await fileToBase64(formData.stnkFile) : null;
+      const medicalReportFileData = formData.medicalReportFile ? await fileToBase64(formData.medicalReportFile) : null;
+
+      // Save claim data to localStorage
+      const savedClaimNumber = saveClaim({
+        fullName: formData.fullName,
+        nik: formData.nik,
+        phone: formData.phone,
+        address: formData.address,
+        incidentDate: formData.incidentDate,
+        incidentTime: formData.incidentTime,
+        incidentLocation: formData.incidentLocation,
+        incidentDescription: formData.incidentDescription,
+        vehicleType: formData.vehicleType,
+        vehicleNumber: formData.vehicleNumber,
+        // Save file data as base64
+        ktpFile: ktpFileData,
+        policeReportFile: policeReportFileData,
+        stnkFile: stnkFileData,
+        medicalReportFile: medicalReportFileData
+      });
+
+      setClaimNumber(savedClaimNumber);
+      toast.success('Klaim berhasil diajukan!');
       setShowModal(true);
     } catch (error) {
       toast.error('Gagal mengajukan klaim. Coba lagi.');
+      console.error('Submit error:', error);
     } finally {
       setLoading(false);
     }
@@ -420,7 +452,7 @@ const ClaimForm = () => {
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-800 mb-2">Klaim Berhasil Diajukan!</h3>
           <p className="text-gray-600 mb-2">Nomor Klaim Anda:</p>
-          <p className="text-2xl font-bold text-blue-600 mb-6">KLM-2024-{Math.floor(Math.random() * 10000)}</p>
+          <p className="text-2xl font-bold text-blue-600 mb-6">{claimNumber}</p>
           <p className="text-gray-600 mb-6">
             Pengajuan klaim Anda sedang diproses. Anda dapat memantau status klaim melalui menu "Cek Status Klaim"
           </p>

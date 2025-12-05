@@ -15,6 +15,9 @@ import ClaimStatus from './pages/ClaimStatus';
 import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
+import DocumentVerification from './pages/DocumentVerification';
+import VerificationStatus from './pages/VerificationStatus';
+import ServiceInfo from './pages/ServiceInfo';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -35,7 +38,10 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
-              
+              <Route path="/verify-documents" element={<DocumentVerification />} />
+              <Route path="/verification-status" element={<VerificationStatus />} />
+              <Route path="/service-info" element={<ServiceInfo />} />
+
               <Route element={<ProtectedRoute />}>
                 <Route path="/claim/new" element={<ClaimForm />} />
                 <Route path="/claim/status" element={<ClaimStatus />} />

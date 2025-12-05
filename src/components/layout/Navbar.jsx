@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, LayoutDashboard, Shield } from 'lucide-react';
+import { Menu, X, User, LogOut, LayoutDashboard, Shield, FileSearch } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
 
@@ -15,6 +15,7 @@ const Navbar = () => {
     { path: '/', label: 'Beranda' },
     { path: '/about', label: 'Tentang' },
     { path: '/services', label: 'Layanan' },
+    { path: '/verification-status', label: 'Status Verifikasi' },
     { path: '/contact', label: 'Kontak' },
   ];
 

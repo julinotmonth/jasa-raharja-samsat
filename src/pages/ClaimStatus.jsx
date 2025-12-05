@@ -1,47 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, Eye, Calendar, MapPin, User } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import StatusBadge from '../components/common/StatusBadge';
 import toast from 'react-hot-toast';
+import { getClaimByNumberOrNIK, initializeMockData } from '../utils/claimStorage';
+import { generateClaimPDF } from '../utils/pdfGenerator';
 
 const ClaimStatus = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Mock data
-  const mockClaims = {
-    'KLM-2024-1234': {
-      id: 'KLM-2024-1234',
-      name: 'Ahmad Fauzi',
-      status: 'processing',
-      date: '2024-11-15',
-      location: 'Jl. Raya Surabaya KM 10',
-      amount: 'Rp 15.000.000',
-      timeline: [
-        { date: '2024-11-15', status: 'Pengajuan diterima', description: 'Klaim berhasil diajukan' },
-        { date: '2024-11-17', status: 'Verifikasi dokumen', description: 'Dokumen sedang diverifikasi' },
-        { date: '2024-11-20', status: 'Dalam proses', description: 'Klaim sedang diproses tim' },
-        { date: null, status: 'Selesai', description: 'Menunggu approval' }
-      ]
-    },
-    'KLM-2024-5678': {
-      id: 'KLM-2024-5678',
-      name: 'Siti Aminah',
-      status: 'approved',
-      date: '2024-10-20',
-      location: 'Jl. Ahmad Yani No. 45',
-      amount: 'Rp 20.000.000',
-      timeline: [
-        { date: '2024-10-20', status: 'Pengajuan diterima', description: 'Klaim berhasil diajukan' },
-        { date: '2024-10-22', status: 'Verifikasi dokumen', description: 'Dokumen telah diverifikasi' },
-        { date: '2024-10-25', status: 'Dalam proses', description: 'Klaim telah diproses' },
-        { date: '2024-10-28', status: 'Disetujui', description: 'Klaim disetujui untuk pencairan' }
-      ]
-    }
-  };
+  // Initialize mock data on component mount
+  useEffect(() => {
+    initializeMockData();
+  }, []);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -51,21 +26,42 @@ const ClaimStatus = () => {
 
     setLoading(true);
     try {
-      // Simulate API call
+      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const result = mockClaims[searchQuery];
+
+      // Get claim from localStorage
+      const result = getClaimByNumberOrNIK(searchQuery.trim());
+
       if (result) {
         setSearchResult(result);
         toast.success('Data klaim ditemukan');
       } else {
         setSearchResult(null);
-        toast.error('Data klaim tidak ditemukan');
+        toast.error('Data klaim tidak ditemukan. Periksa kembali nomor klaim atau NIK Anda.');
       }
     } catch (error) {
       toast.error('Terjadi kesalahan. Coba lagi.');
+      console.error('Search error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!searchResult) {
+      toast.error('Tidak ada data untuk diunduh');
+      return;
+    }
+
+    try {
+      console.log('Generating PDF for claim:', searchResult.id);
+      console.log('Claim data:', searchResult);
+      generateClaimPDF(searchResult);
+      toast.success('PDF berhasil diunduh!');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      console.error('Error details:', error.message, error.stack);
+      toast.error(`Gagal mengunduh PDF: ${error.message}`);
     }
   };
 
@@ -95,7 +91,7 @@ const ClaimStatus = () => {
               </Button>
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              Contoh nomor klaim untuk testing: KLM-2024-1234 atau KLM-2024-5678
+              Masukkan nomor klaim atau NIK untuk mencari status klaim Anda
             </p>
           </Card>
 
@@ -111,7 +107,7 @@ const ClaimStatus = () => {
                     </h2>
                     <StatusBadge status={searchResult.status} />
                   </div>
-                  <Button variant="outline" icon={Download} size="sm">
+                  <Button variant="outline" icon={Download} size="sm" onClick={handleDownloadPDF}>
                     Download
                   </Button>
                 </div>
@@ -121,15 +117,15 @@ const ClaimStatus = () => {
                     <User className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">Nama Pemohon</p>
-                      <p className="font-medium text-gray-800">{searchResult.name}</p>
+                      <p className="font-medium text-gray-800">{searchResult.fullName}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-3">
                     <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Tanggal Pengajuan</p>
-                      <p className="font-medium text-gray-800">{searchResult.date}</p>
+                      <p className="text-sm text-gray-500">Tanggal Kejadian</p>
+                      <p className="font-medium text-gray-800">{searchResult.incidentDate}</p>
                     </div>
                   </div>
 
@@ -137,15 +133,15 @@ const ClaimStatus = () => {
                     <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">Lokasi Kejadian</p>
-                      <p className="font-medium text-gray-800">{searchResult.location}</p>
+                      <p className="font-medium text-gray-800">{searchResult.incidentLocation}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-3">
                     <Eye className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-500">Estimasi Santunan</p>
-                      <p className="font-medium text-gray-800">{searchResult.amount}</p>
+                      <p className="text-sm text-gray-500">Nomor HP</p>
+                      <p className="font-medium text-gray-800">{searchResult.phone}</p>
                     </div>
                   </div>
                 </div>

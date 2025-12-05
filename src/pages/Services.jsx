@@ -1,12 +1,41 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, Search, Phone, Download, Upload, Clock, Shield, Users, FileCheck } from 'lucide-react';
+import { FileText, CheckCircle, Search, Phone, Download, Upload, Clock, Shield, Users, FileCheck, FileSearch } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import Modal from '../components/common/Modal';
+import toast from 'react-hot-toast';
+import { generateFormPengajuanKlaim, generatePanduanPengajuan, generateDaftarDokumen } from '../utils/formsGenerator';
 
 const Services = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  const handleDownloadForm = (type) => {
+    try {
+      switch (type) {
+        case 'formulir':
+          generateFormPengajuanKlaim();
+          toast.success('Formulir berhasil diunduh!');
+          break;
+        case 'panduan':
+          generatePanduanPengajuan();
+          toast.success('Panduan berhasil diunduh!');
+          break;
+        case 'checklist':
+          generateDaftarDokumen();
+          toast.success('Checklist dokumen berhasil diunduh!');
+          break;
+        default:
+          break;
+      }
+      setShowDownloadModal(false);
+    } catch (error) {
+      toast.error('Gagal mengunduh dokumen');
+      console.error('Download error:', error);
+    }
+  };
 
   const services = [
     {
@@ -30,7 +59,7 @@ const Services = () => {
       title: 'Download Formulir',
       description: 'Download formulir dan dokumen pendukung yang diperlukan untuk pengajuan klaim',
       features: ['Formulir standar', 'Panduan lengkap', 'Format digital'],
-      action: '#',
+      action: 'download',
       color: 'purple'
     },
     {
@@ -46,15 +75,23 @@ const Services = () => {
       title: 'Verifikasi Dokumen',
       description: 'Layanan verifikasi kelengkapan dokumen sebelum pengajuan klaim resmi',
       features: ['Pre-check dokumen', 'Feedback cepat', 'Panduan perbaikan'],
-      action: '#',
+      action: '/verify-documents',
       color: 'indigo'
+    },
+    {
+      icon: FileSearch,
+      title: 'Cek Status Verifikasi',
+      description: 'Lacak status verifikasi dokumen yang telah Anda kirimkan ke admin',
+      features: ['Cari dengan ID', 'Cari dengan NIK', 'Lihat hasil verifikasi'],
+      action: '/verification-status',
+      color: 'teal'
     },
     {
       icon: Users,
       title: 'Informasi Layanan',
       description: 'Informasi lengkap tentang jenis layanan, persyaratan, dan prosedur klaim',
       features: ['FAQ lengkap', 'Video tutorial', 'Panduan step-by-step'],
-      action: '#',
+      action: '/service-info',
       color: 'pink'
     }
   ];
@@ -70,6 +107,7 @@ const Services = () => {
     purple: 'bg-purple-100 text-purple-600',
     orange: 'bg-orange-100 text-orange-600',
     indigo: 'bg-indigo-100 text-indigo-600',
+    teal: 'bg-teal-100 text-teal-600',
     pink: 'bg-pink-100 text-pink-600'
   };
 
@@ -124,7 +162,15 @@ const Services = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => service.action.startsWith('/') ? navigate(service.action) : null}
+                  onClick={() => {
+                    if (service.action === 'download') {
+                      setShowDownloadModal(true);
+                    } else if (service.action.startsWith('/')) {
+                      navigate(service.action);
+                    } else {
+                      toast.info('Fitur ini sedang dalam pengembangan');
+                    }
+                  }}
                 >
                   Akses Layanan
                 </Button>
@@ -203,6 +249,73 @@ const Services = () => {
           </Card>
         </div>
       </section>
+
+      {/* Download Modal */}
+      <Modal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        title="Download Formulir & Dokumen"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600 mb-6">
+            Pilih dokumen yang ingin Anda download:
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => handleDownloadForm('formulir')}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            >
+              <div className="flex items-center">
+                <FileText className="w-5 h-5 text-blue-600 mr-3" />
+                <div className="text-left">
+                  <p className="font-medium text-gray-800">Formulir Pengajuan Klaim</p>
+                  <p className="text-sm text-gray-500">Form lengkap untuk pengajuan klaim</p>
+                </div>
+              </div>
+              <Download className="w-5 h-5 text-gray-400" />
+            </button>
+
+            <button
+              onClick={() => handleDownloadForm('panduan')}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            >
+              <div className="flex items-center">
+                <FileCheck className="w-5 h-5 text-green-600 mr-3" />
+                <div className="text-left">
+                  <p className="font-medium text-gray-800">Panduan Pengajuan Klaim</p>
+                  <p className="text-sm text-gray-500">Panduan lengkap step-by-step</p>
+                </div>
+              </div>
+              <Download className="w-5 h-5 text-gray-400" />
+            </button>
+
+            <button
+              onClick={() => handleDownloadForm('checklist')}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            >
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 text-purple-600 mr-3" />
+                <div className="text-left">
+                  <p className="font-medium text-gray-800">Checklist Dokumen</p>
+                  <p className="text-sm text-gray-500">Daftar dokumen persyaratan</p>
+                </div>
+              </div>
+              <Download className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowDownloadModal(false)}
+            >
+              Tutup
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
